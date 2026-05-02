@@ -9,6 +9,18 @@ export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 
+// Simple connection test
+import { doc, getDocFromServer } from 'firebase/firestore';
+async function verify() {
+  try {
+    await getDocFromServer(doc(db, 'config', 'test'));
+    console.log("FIRESTORE_LINK: ESTABLISHED");
+  } catch (e) {
+    console.warn("FIRESTORE_LINK: RESTRICTED", e);
+  }
+}
+verify();
+
 export enum OperationType {
   CREATE = 'create',
   UPDATE = 'update',

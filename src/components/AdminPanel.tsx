@@ -147,7 +147,7 @@ export default function AdminPanel() {
     setConfirmModal({
       isOpen: true,
       title: `${actionLabel} Protocol`,
-      description: `Targeting Packet [${id.slice(0, 8)}]. System will automatically synchronize a visual blueprint and transition state to ${status.toUpperCase()}. Proceed?`,
+      description: `Targeting Packet [${id.slice(0, 8)}]. System will automatically synchronize a visual record and transition state to ${status.toUpperCase()}. Proceed?`,
       icon: status === 'accepted' ? <CheckCircle className="text-green-500" /> : <XSquare className="text-red-500" />,
       onConfirm: async () => {
         setConfirmModal(null);
@@ -263,6 +263,17 @@ export default function AdminPanel() {
     }
   };
 
+  const publishFromRequest = (req: SourceRequest) => {
+    setPName(req.name);
+    setPFeatures(req.webType);
+    setPImg(req.imageUrl || '');
+    setPAdminName('Vanguard Prime');
+    setActiveTab('portfolios');
+    
+    // Scroll to form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const filteredRequests = requests.filter(r => {
     const matchesSearch = r.name.toLowerCase().includes(search.toLowerCase()) || r.id.toLowerCase().includes(search.toLowerCase());
     const matchesTab = requestSubTab === 'pending' ? r.status === 'pending' : r.status !== 'pending';
@@ -341,6 +352,7 @@ export default function AdminPanel() {
                   isCapturing={capturing === req.id}
                   onStatus={handleUpdateStatus} 
                   onDelete={() => deleteRequest(req.id)}
+                  onArchive={publishFromRequest}
                   index={idx} 
                 />
               ))}
@@ -584,11 +596,11 @@ function TabButton({ active, onClick, label, count }: { active: boolean, onClick
   );
 }
 
-function AdminRequestCard({ request, onStatus, onDelete, index, isCapturing }: { request: SourceRequest, onStatus: (id: string, s: RequestStatus) => void, onDelete: () => void, index: number, isCapturing?: boolean, key?: any }) {
+function AdminRequestCard({ request, onStatus, onDelete, onArchive, index, isCapturing }: { request: SourceRequest, onStatus: (id: string, s: RequestStatus) => void, onDelete: () => void, onArchive: (r: SourceRequest) => void, index: number, isCapturing?: boolean, key?: any }) {
   const [showChat, setShowChat] = useState(false);
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.05 }}
@@ -617,7 +629,7 @@ function AdminRequestCard({ request, onStatus, onDelete, index, isCapturing }: {
               <div className="space-y-4">
                 <div className="p-8 bg-black/40 border border-zinc-800 rounded-3xl backdrop-blur-md">
                   <h4 className="text-[10px] uppercase font-black text-zinc-600 tracking-[0.4em] mb-6 flex items-center gap-3">
-                    <Activity size={14} className="text-zinc-700" /> Blueprint_Specifications
+                    <Activity size={14} className="text-zinc-700" /> Asset_Specifications
                   </h4>
                   <p className="text-zinc-400 text-sm leading-relaxed whitespace-pre-wrap font-medium">{request.webType}</p>
                 </div>
@@ -636,9 +648,16 @@ function AdminRequestCard({ request, onStatus, onDelete, index, isCapturing }: {
               </div>
 
               <button 
+                onClick={() => onArchive(request)}
+                className="w-full py-5 bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all shadow-lg"
+              >
+                <Layers size={18} /> Push_To_Archives
+              </button>
+
+              <button 
                 onClick={() => setShowChat(!showChat)}
                 className={`w-full py-5 rounded-2xl flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest transition-all shadow-lg
-                  ${showChat ? 'bg-indigo-600 text-white shadow-indigo-500/20' : 'bg-black border border-zinc-900 text-zinc-500 hover:text-white'}`}
+                  ${showChat ? 'bg-indigo-600 text-white shadow-indigo-500/20' : 'bg-black border border-zinc-900 text-zinc-500 hover:text-white'} `}
               >
                 <MessageCircle size={18} /> Secure_Comm_Log
               </button>
