@@ -282,27 +282,27 @@ export default function AdminPanel() {
 
   return (
     <div className="space-y-10">
-      <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-8 pb-8 border-b border-zinc-900">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-8 border-b border-zinc-900">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-red-500/70">Secure_Admin_Mode // High_Priority</span>
+            <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+            <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] text-red-500/70">Secure_Admin_Mode // High_Priority</span>
           </div>
-          <h2 className="text-5xl font-black text-white tracking-tighter">VANGUARD_HUD</h2>
-          <p className="text-zinc-500 text-sm mt-2 font-medium">Managing encrypted source code acquisition protocols.</p>
+          <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase">Vanguard_HUD</h2>
+          <p className="text-zinc-500 text-[10px] md:text-sm mt-1 md:mt-2 font-medium">Managing encrypted source code protocols.</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-800/50 shrink-0">
-            <TabButton active={activeTab === 'requests'} onClick={() => setActiveTab('requests')} label="Operations" count={requests.length} />
-            <TabButton active={activeTab === 'announcements'} onClick={() => setActiveTab('announcements')} label="Broadcasts" count={announcements.length} />
-            <TabButton active={activeTab === 'portfolios'} onClick={() => setActiveTab('portfolios')} label="Archives" count={portfolios.length} />
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
+          <div className="flex w-full sm:w-auto bg-zinc-900/50 p-1 rounded-2xl border border-zinc-800/50 overflow-x-auto no-scrollbar">
+            <TabButton active={activeTab === 'requests'} onClick={() => setActiveTab('requests')} label="Ops" count={requests.length} />
+            <TabButton active={activeTab === 'announcements'} onClick={() => setActiveTab('announcements')} label="Broadcast" count={announcements.length} />
+            <TabButton active={activeTab === 'portfolios'} onClick={() => setActiveTab('portfolios')} label="Archive" count={portfolios.length} />
           </div>
           <button 
             onClick={() => setWhatsappModal(true)}
-            className="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-green-500 hover:bg-green-500 hover:text-white transition-all flex items-center gap-2 text-xs font-black uppercase tracking-widest"
+            className="w-full sm:w-auto px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-green-500 hover:bg-green-500 hover:text-white transition-all flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest"
           >
-            <MessageCircle size={16} /> Config_WA
+            <MessageCircle size={14} /> Config
           </button>
         </div>
       </div>
@@ -585,11 +585,11 @@ function TabButton({ active, onClick, label, count }: { active: boolean, onClick
   return (
     <button 
       onClick={onClick}
-      className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.3em] transition-all flex items-center gap-3
-        ${active ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-500/20 px-10' : 'text-zinc-600 hover:text-zinc-400'}`}
+      className={`px-4 md:px-8 py-2 md:py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] transition-all flex items-center gap-2 md:gap-3 shrink-0
+        ${active ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-500/20' : 'text-zinc-600 hover:text-zinc-400'}`}
     >
       {label}
-      <span className={`px-2 py-0.5 rounded-full text-[9px] border ${active ? 'bg-white/20 border-white/20 text-white' : 'bg-transparent border-zinc-800 text-zinc-700'}`}>
+      <span className={`px-1.5 py-0.5 rounded-full text-[8px] border ${active ? 'bg-white/20 border-white/20 text-white' : 'bg-transparent border-zinc-800 text-zinc-700'}`}>
         {count}
       </span>
     </button>

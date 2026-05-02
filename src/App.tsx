@@ -94,7 +94,7 @@ export default function App() {
         <IdentityOnboarding userId={user.uid} onComplete={(name) => setProfile({ id: user.uid, name })} />
       )}
 
-      <main className="relative max-w-6xl mx-auto px-6 pt-12 pb-32 md:pb-24">
+      <main className="relative max-w-6xl mx-auto px-6 pt-12 pb-40 md:pb-24">
         <AnimatePresence mode="wait">
           {view === 'home' && (
             <motion.div
