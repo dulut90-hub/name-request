@@ -147,7 +147,7 @@ export default function AdminPanel() {
     setConfirmModal({
       isOpen: true,
       title: `${actionLabel} Protocol`,
-      description: `Targeting Packet [${id.slice(0, 8)}]. System will automatically capture a visual record and transition state to ${status.toUpperCase()}. Proceed?`,
+      description: `Targeting Packet [${id.slice(0, 8)}]. System will automatically synchronize a visual blueprint and transition state to ${status.toUpperCase()}. Proceed?`,
       icon: status === 'accepted' ? <CheckCircle className="text-green-500" /> : <XSquare className="text-red-500" />,
       onConfirm: async () => {
         setConfirmModal(null);
@@ -157,7 +157,10 @@ export default function AdminPanel() {
         
         // 2. Update status and image
         try {
-          const updateData: any = { status };
+          const updateData: any = { 
+            status,
+            updatedAt: serverTimestamp()
+          };
           if (capturedImageUrl) {
             updateData.imageUrl = capturedImageUrl;
           }

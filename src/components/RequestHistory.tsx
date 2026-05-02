@@ -263,16 +263,17 @@ function UserRequestChat({ requestId }: { requestId: string }) {
         <div ref={scrollRef} />
       </div>
 
-      <form className="flex gap-3 relative group">
+      <form onSubmit={sendMessage} className="flex gap-3 relative group">
         <input 
           type="text"
-          disabled
-          placeholder="SECURE_CHANNEL: ADMIN_ONLY_REPLY"
-          className="flex-1 bg-zinc-950 border border-zinc-900 rounded-xl px-5 py-3 text-xs text-zinc-700 cursor-not-allowed italic"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="SEND_MESSAGE_TO_VANGUARD"
+          className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-5 py-3 text-xs text-white focus:border-indigo-500 outline-none transition-all"
         />
-        <div className="absolute inset-0 bg-black/10 hidden group-hover:flex items-center justify-center text-[8px] font-black uppercase tracking-widest text-zinc-800">
-          Transmission_Locked: Waiting_For_Admin_Sync
-        </div>
+        <button type="submit" className="p-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-all shadow-lg active:scale-95 flex items-center justify-center">
+            <Send size={18} />
+        </button>
       </form>
     </div>
   );
