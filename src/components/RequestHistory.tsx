@@ -5,14 +5,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   History, 
   Search, 
-  Clock, 
   CheckCircle2, 
   XCircle, 
   Clock4,
   Image as ImageIcon,
   Key,
   ShieldCheck,
-  Send,
   Loader2,
   Info
 } from 'lucide-react';
@@ -187,4 +185,16 @@ function RequestCard({ request }: { request: SourceRequest, key?: any }) {
       </div>
     </motion.div>
   );
+}
+
+function StatusIcon({ status }: { status: SourceRequest['status'] }) {
+  if (status === 'accepted') {
+    return <CheckCircle2 className="text-green-500" size={26} />;
+  }
+
+  if (status === 'rejected') {
+    return <XCircle className="text-red-500" size={26} />;
+  }
+
+  return <Key className="text-zinc-500" size={26} />;
 }
