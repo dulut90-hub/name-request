@@ -23,6 +23,30 @@ export default function App() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
+  const getGuestUser = () => {
+    const storedGuestUid = localStorage.getItem('guest_uid');
+    if (storedGuestUid) {
+      return { uid: storedGuestUid, isAnonymous: true };
+    }
+
+    const nextGuestUid = 'guest-' + Math.random().toString(36).slice(2, 7);
+    localStorage.setItem('guest_uid', nextGuestUid);
+    return { uid: nextGuestUid, isAnonymous: true };
+  };
+
+  const getCachedProfile = (uid: string) => {
+    try {
+      const cached = localStorage.getItem(`profile_${uid}`);
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const cacheProfile = (uid: string, nextProfile: any) => {
+    localStorage.setItem(`profile_${uid}`, JSON.stringify(nextProfile));
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
       if (!u) {
@@ -33,15 +57,24 @@ export default function App() {
           // Fallback for restricted environments/projects
           if (e.message.includes('admin-restricted-operation')) {
             console.warn("Anonymous Auth is restricted in this project. Using guest context.");
-            setUser({ uid: 'guest-' + Math.random().toString(36).slice(2, 7), isAnonymous: true });
+            const guestUser = getGuestUser();
+            setUser(guestUser);
+            const cachedProfile = getCachedProfile(guestUser.uid);
+            if (cachedProfile) setProfile(cachedProfile);
           }
         }
       } else {
         setUser(u);
+        const cachedProfile = getCachedProfile(u.uid);
+        if (cachedProfile) {
+          setProfile(cachedProfile);
+        }
         try {
           const profileSnap = await getDocFromServer(doc(db, 'profiles', u.uid));
           if (profileSnap.exists()) {
-            setProfile({ id: profileSnap.id, ...profileSnap.data() });
+            const remoteProfile = { id: profileSnap.id, ...profileSnap.data() };
+            setProfile(remoteProfile);
+            cacheProfile(u.uid, remoteProfile);
           }
         } catch (err) {
           console.warn("Profile fetch restricted:", err);
@@ -91,7 +124,14 @@ export default function App() {
       />
 
       {user && !profile && !isAdminAuthenticated && (
-        <IdentityOnboarding userId={user.uid} onComplete={(name) => setProfile({ id: user.uid, name })} />
+        <IdentityOnboarding
+          userId={user.uid}
+          onComplete={(name) => {
+            const nextProfile = { id: user.uid, name };
+            setProfile(nextProfile);
+            cacheProfile(user.uid, nextProfile);
+          }}
+        />
       )}
 
       <main className="relative max-w-6xl mx-auto px-6 pt-12 pb-40 md:pb-24">
