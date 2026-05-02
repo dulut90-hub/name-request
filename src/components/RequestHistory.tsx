@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
+import React, { useState, useEffect } from 'react';
+import { collection, query, where, orderBy, onSnapshot, getDocs } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   History, 
   Search, 
-  MessageCircle, 
   Clock, 
   CheckCircle2, 
   XCircle, 
@@ -17,7 +16,7 @@ import {
   Loader2,
   Info
 } from 'lucide-react';
-import { SourceRequest, ChatMessage } from '../types';
+import { SourceRequest } from '../types';
 
 interface RequestHistoryProps {
   user: any;
@@ -121,7 +120,6 @@ export default function RequestHistory({ user }: RequestHistoryProps) {
 }
 
 function RequestCard({ request }: { request: SourceRequest, key?: any }) {
-  const [showChat, setShowChat] = useState(false);
 
   return (
     <motion.div 
@@ -177,17 +175,6 @@ function RequestCard({ request }: { request: SourceRequest, key?: any }) {
           </div>
 
           <div className="space-y-4">
-             <button 
-                onClick={() => setShowChat(!showChat)}
-                className={`w-full py-4 rounded-2xl flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest border transition-all
-                  ${showChat 
-                    ? 'bg-indigo-600 text-white border-indigo-500 shadow-xl shadow-indigo-500/20' 
-                    : 'bg-zinc-950 text-zinc-500 border-zinc-900 hover:text-white hover:border-zinc-700'}`}
-             >
-               <MessageCircle size={18} />
-               Secure_Comm_Link
-             </button>
-
              <div className="p-5 bg-zinc-950/50 rounded-2xl border border-zinc-900 italic">
                <p className="text-[10px] text-zinc-700 font-mono leading-relaxed">
                  NODE_IP: VIRTUAL_0.1 <br />
@@ -197,90 +184,7 @@ function RequestCard({ request }: { request: SourceRequest, key?: any }) {
              </div>
           </div>
         </div>
-
-        <AnimatePresence>
-          {showChat && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="mt-10 pt-10 border-t border-zinc-900"
-            >
-              <UserRequestChat requestId={request.id} />
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     </motion.div>
   );
-}
-
-function UserRequestChat({ requestId }: { requestId: string }) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [text, setText] = useState('');
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const q = query(collection(db, 'requests', requestId, 'messages'), orderBy('createdAt', 'asc'));
-    const unsub = onSnapshot(q, (snap) => {
-      setMessages(snap.docs.map(d => ({ id: d.id, ...d.data() } as ChatMessage)));
-    });
-    return () => unsub();
-  }, [requestId]);
-
-  const sendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!text.trim()) return;
-    try {
-      await addDoc(collection(db, 'requests', requestId, 'messages'), {
-        text,
-        sender: 'user',
-        createdAt: serverTimestamp()
-      });
-      setText('');
-      scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="max-h-64 overflow-y-auto space-y-4 pr-2 scrollbar-thin">
-        {messages.map((m) => (
-          <div key={m.id} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[80%] p-4 rounded-2xl text-xs font-medium leading-relaxed ${m.sender === 'user' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-zinc-800 text-zinc-300 rounded-tl-none border border-zinc-700'}`}>
-              <p>{m.text}</p>
-              <p className={`text-[8px] mt-2 font-mono uppercase opacity-50 ${m.sender === 'user' ? 'text-right' : 'text-left'}`}>
-                {m.createdAt?.toDate().toLocaleTimeString()}
-              </p>
-            </div>
-          </div>
-        ))}
-        {messages.length === 0 && (
-          <div className="text-center py-10 opacity-20 text-[10px] font-mono uppercase tracking-widest tracking-[0.5em]">Establishing_Secure_Connection...</div>
-        )}
-        <div ref={scrollRef} />
-      </div>
-
-      <form onSubmit={sendMessage} className="flex gap-3 relative group">
-        <input 
-          type="text"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="SEND_MESSAGE_TO_VANGUARD"
-          className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-5 py-3 text-xs text-white focus:border-indigo-500 outline-none transition-all"
-        />
-        <button type="submit" className="p-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-all shadow-lg active:scale-95 flex items-center justify-center">
-            <Send size={18} />
-        </button>
-      </form>
-    </div>
-  );
-}
-
-function StatusIcon({ status }: { status: string }) {
-  if (status === 'accepted') return <div className="w-14 h-14 bg-green-500 rounded-2xl flex items-center justify-center text-black shadow-[0_0_20px_rgba(34,197,94,0.3)]"><CheckCircle2 size={28} /></div>;
-  if (status === 'rejected') return <div className="w-14 h-14 bg-red-500 rounded-2xl flex items-center justify-center text-black shadow-[0_0_20px_rgba(239,68,68,0.3)]"><XCircle size={28} /></div>;
-  return <div className="w-14 h-14 bg-zinc-800 rounded-2xl flex items-center justify-center text-zinc-400 border border-zinc-700 animate-pulse"><Clock size={28} /></div>;
 }

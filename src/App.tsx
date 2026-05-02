@@ -23,7 +23,36 @@ export default function App() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
+  const getGuestUser = () => {
+    const storedGuestUid = localStorage.getItem('guest_uid');
+    if (storedGuestUid) {
+      return { uid: storedGuestUid, isAnonymous: true };
+    }
+
+    const nextGuestUid = 'guest-' + Math.random().toString(36).slice(2, 7);
+    localStorage.setItem('guest_uid', nextGuestUid);
+    return { uid: nextGuestUid, isAnonymous: true };
+  };
+
+  const getCachedProfile = (uid: string) => {
+    try {
+      const cached = localStorage.getItem(`profile_${uid}`);
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const cacheProfile = (uid: string, nextProfile: any) => {
+    localStorage.setItem(`profile_${uid}`, JSON.stringify(nextProfile));
+  };
+
   useEffect(() => {
+    const cachedAdminAuth = localStorage.getItem('admin_authenticated');
+    if (cachedAdminAuth === 'true') {
+      setIsAdminAuthenticated(true);
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
       if (!u) {
         try {
@@ -33,15 +62,24 @@ export default function App() {
           // Fallback for restricted environments/projects
           if (e.message.includes('admin-restricted-operation')) {
             console.warn("Anonymous Auth is restricted in this project. Using guest context.");
-            setUser({ uid: 'guest-' + Math.random().toString(36).slice(2, 7), isAnonymous: true });
+            const guestUser = getGuestUser();
+            setUser(guestUser);
+            const cachedProfile = getCachedProfile(guestUser.uid);
+            if (cachedProfile) setProfile(cachedProfile);
           }
         }
       } else {
         setUser(u);
+        const cachedProfile = getCachedProfile(u.uid);
+        if (cachedProfile) {
+          setProfile(cachedProfile);
+        }
         try {
           const profileSnap = await getDocFromServer(doc(db, 'profiles', u.uid));
           if (profileSnap.exists()) {
-            setProfile({ id: profileSnap.id, ...profileSnap.data() });
+            const remoteProfile = { id: profileSnap.id, ...profileSnap.data() };
+            setProfile(remoteProfile);
+            cacheProfile(u.uid, remoteProfile);
           }
         } catch (err) {
           console.warn("Profile fetch restricted:", err);
@@ -84,14 +122,24 @@ export default function App() {
       </div>
 
       <Navbar 
-        onLogout={() => setIsAdminAuthenticated(false)} 
+        onLogout={() => {
+          setIsAdminAuthenticated(false);
+          localStorage.removeItem('admin_authenticated');
+        }} 
         currentView={view} 
         setView={setView} 
         isAdmin={isAdminAuthenticated}
       />
 
       {user && !profile && !isAdminAuthenticated && (
-        <IdentityOnboarding userId={user.uid} onComplete={(name) => setProfile({ id: user.uid, name })} />
+        <IdentityOnboarding
+          userId={user.uid}
+          onComplete={(name) => {
+            const nextProfile = { id: user.uid, name };
+            setProfile(nextProfile);
+            cacheProfile(user.uid, nextProfile);
+          }}
+        />
       )}
 
       <main className="relative max-w-6xl mx-auto px-6 pt-12 pb-40 md:pb-24">
@@ -164,7 +212,12 @@ export default function App() {
               exit={{ opacity: 0 }}
             >
               {!isAdminAuthenticated ? (
-                <AdminLogin onAuthenticated={() => setIsAdminAuthenticated(true)} />
+                <AdminLogin
+                  onAuthenticated={() => {
+                    setIsAdminAuthenticated(true);
+                    localStorage.setItem('admin_authenticated', 'true');
+                  }}
+                />
               ) : (
                 <AdminPanel />
               )}
@@ -187,10 +240,10 @@ export default function App() {
                   </div>
                 </div>
                 <div className="space-y-4">
-                  <h2 className="text-5xl font-black text-white uppercase tracking-tighter">System_Control</h2>
+                  <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tight break-words">System_Control</h2>
                   <div className="flex items-center justify-center gap-3">
                     <div className="w-12 h-[1px] bg-indigo-500/50" />
-                    <p className="text-zinc-500 font-mono text-[10px] uppercase tracking-[0.5em]">Command_Network // Live_Sync</p>
+                    <p className="text-zinc-500 font-mono text-[9px] md:text-[10px] uppercase tracking-[0.25em] text-center">Command_Network // Live_Sync</p>
                     <div className="w-12 h-[1px] bg-indigo-500/50" />
                   </div>
                 </div>
