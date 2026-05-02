@@ -47,20 +47,39 @@ export default function App() {
     localStorage.setItem(`profile_${uid}`, JSON.stringify(nextProfile));
   };
 
+  const isAnonymousAuthRestricted = () => localStorage.getItem('anonymous_auth_restricted') === 'true';
+  const markAnonymousAuthRestricted = () => localStorage.setItem('anonymous_auth_restricted', 'true');
+
   useEffect(() => {
+    const cachedAdminAuth = localStorage.getItem('admin_authenticated');
+    if (cachedAdminAuth === 'true') {
+      setIsAdminAuthenticated(true);
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
       if (!u) {
+        if (isAnonymousAuthRestricted()) {
+          const guestUser = getGuestUser();
+          setUser(guestUser);
+          const cachedProfile = getCachedProfile(guestUser.uid);
+          if (cachedProfile) setProfile(cachedProfile);
+          setLoading(false);
+          return;
+        }
+
         try {
           await signInAnonymously(auth);
         } catch (e: any) {
-          console.error("Auth failed:", e.message);
-          // Fallback for restricted environments/projects
-          if (e.message.includes('admin-restricted-operation')) {
+          const isRestricted = e?.code === 'auth/admin-restricted-operation' || e?.message?.includes('admin-restricted-operation');
+          if (isRestricted) {
+            markAnonymousAuthRestricted();
             console.warn("Anonymous Auth is restricted in this project. Using guest context.");
             const guestUser = getGuestUser();
             setUser(guestUser);
             const cachedProfile = getCachedProfile(guestUser.uid);
             if (cachedProfile) setProfile(cachedProfile);
+          } else {
+            console.error("Auth failed:", e?.message || e);
           }
         }
       } else {
@@ -117,7 +136,10 @@ export default function App() {
       </div>
 
       <Navbar 
-        onLogout={() => setIsAdminAuthenticated(false)} 
+        onLogout={() => {
+          setIsAdminAuthenticated(false);
+          localStorage.removeItem('admin_authenticated');
+        }} 
         currentView={view} 
         setView={setView} 
         isAdmin={isAdminAuthenticated}
@@ -204,7 +226,12 @@ export default function App() {
               exit={{ opacity: 0 }}
             >
               {!isAdminAuthenticated ? (
-                <AdminLogin onAuthenticated={() => setIsAdminAuthenticated(true)} />
+                <AdminLogin
+                  onAuthenticated={() => {
+                    setIsAdminAuthenticated(true);
+                    localStorage.setItem('admin_authenticated', 'true');
+                  }}
+                />
               ) : (
                 <AdminPanel />
               )}
@@ -227,10 +254,10 @@ export default function App() {
                   </div>
                 </div>
                 <div className="space-y-4">
-                  <h2 className="text-5xl font-black text-white uppercase tracking-tighter">System_Control</h2>
+                  <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tight break-words">System_Control</h2>
                   <div className="flex items-center justify-center gap-3">
                     <div className="w-12 h-[1px] bg-indigo-500/50" />
-                    <p className="text-zinc-500 font-mono text-[10px] uppercase tracking-[0.5em]">Command_Network // Live_Sync</p>
+                    <p className="text-zinc-500 font-mono text-[9px] md:text-[10px] uppercase tracking-[0.25em] text-center">Command_Network // Live_Sync</p>
                     <div className="w-12 h-[1px] bg-indigo-500/50" />
                   </div>
                 </div>
