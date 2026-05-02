@@ -47,6 +47,9 @@ export default function App() {
     localStorage.setItem(`profile_${uid}`, JSON.stringify(nextProfile));
   };
 
+  const isAnonymousAuthRestricted = () => localStorage.getItem('anonymous_auth_restricted') === 'true';
+  const markAnonymousAuthRestricted = () => localStorage.setItem('anonymous_auth_restricted', 'true');
+
   useEffect(() => {
     const cachedAdminAuth = localStorage.getItem('admin_authenticated');
     if (cachedAdminAuth === 'true') {
@@ -55,17 +58,28 @@ export default function App() {
 
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
       if (!u) {
+        if (isAnonymousAuthRestricted()) {
+          const guestUser = getGuestUser();
+          setUser(guestUser);
+          const cachedProfile = getCachedProfile(guestUser.uid);
+          if (cachedProfile) setProfile(cachedProfile);
+          setLoading(false);
+          return;
+        }
+
         try {
           await signInAnonymously(auth);
         } catch (e: any) {
-          console.error("Auth failed:", e.message);
-          // Fallback for restricted environments/projects
-          if (e.message.includes('admin-restricted-operation')) {
+          const isRestricted = e?.code === 'auth/admin-restricted-operation' || e?.message?.includes('admin-restricted-operation');
+          if (isRestricted) {
+            markAnonymousAuthRestricted();
             console.warn("Anonymous Auth is restricted in this project. Using guest context.");
             const guestUser = getGuestUser();
             setUser(guestUser);
             const cachedProfile = getCachedProfile(guestUser.uid);
             if (cachedProfile) setProfile(cachedProfile);
+          } else {
+            console.error("Auth failed:", e?.message || e);
           }
         }
       } else {
