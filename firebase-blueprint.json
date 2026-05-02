@@ -1,0 +1,69 @@
+{
+  "entities": {
+    "Request": {
+      "title": "Request",
+      "description": "A request for web source code",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the requester" },
+        "webType": { "type": "string", "description": "Type/Description of the website wanted" },
+        "status": { "type": "string", "enum": ["pending", "accepted", "rejected"], "description": "Current status of the request" },
+        "adminNote": { "type": "string", "description": "Feedback from admin" },
+        "secretKey": { "type": "string", "description": "Unique key to access this request" },
+        "imageUrl": { "type": "string", "description": "URL of the image uploaded by admin" },
+        "userId": { "type": "string", "description": "UID of the requester (anonymous or custom)" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the request was created" }
+      },
+      "required": ["name", "webType", "status", "secretKey", "userId", "createdAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "A message in the secure chat",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string" },
+        "sender": { "type": "string", "enum": ["user", "admin"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Announcement": {
+      "title": "Announcement",
+      "description": "System-wide updates or announcements",
+      "type": "object",
+      "properties": {
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["content", "createdAt"]
+    },
+    "Portfolio": {
+      "title": "Portfolio",
+      "description": "Completed project showcase",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "url": { "type": "string" },
+        "features": { "type": "string" },
+        "adminNote": { "type": "string" },
+        "adminName": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "url", "features", "adminName", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/requests/{requestId}": {
+      "schema": "Request",
+      "description": "All source code requests"
+    },
+    "/announcements/{announcementId}": {
+      "schema": "Announcement",
+      "description": "System announcements"
+    },
+    "/portfolios/{portfolioId}": {
+      "schema": "Portfolio",
+      "description": "Completed works"
+    }
+  }
+}

@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isSignedIn() { return request.auth != null; }
+    function isAdmin() { return isSignedIn() && (request.auth.token.email == 'animationxudah@gmail.com' && request.auth.token.email_verified == true); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    
+    // Default deny
+    match /{document=**} { allow read, write: if false; }
+
+    // Announcements & Portfolios: Public Read
+    match /announcements/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /portfolios/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /config/global {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Profiles
+    match /profiles/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Requests
+    match /requests/{requestId} {
+      // Allow read if user owns it OR if they provide the correct secret key in a query
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      
+      // Allow list queries only if they filter by userId (for history) OR secretKey (for search)
+      allow list: if isSignedIn() && (
+        (request.query.limit <= 50 && resource.data.userId == request.auth.uid) ||
+        (request.query.limit <= 10 && resource.data.secretKey != null) ||
+        isAdmin()
+      );
+
+      allow create: if isSignedIn() && 
+        incoming().userId == request.auth.uid &&
+        incoming().status == 'pending' &&
+        incoming().name.size() <= 100 &&
+        incoming().webType.size() <= 2000;
+
+      allow update: if isAdmin() || (
+        isSignedIn() && 
+        resource.data.userId == request.auth.uid && 
+        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'webType'])
+      );
+      
+      allow delete: if isAdmin();
+
+      // Messages subcollection
+      match /messages/{messageId} {
+        allow read: if isSignedIn() && (get(/databases/$(database)/documents/requests/$(requestId)).data.userId == request.auth.uid || isAdmin());
+        allow create: if isSignedIn() && (get(/databases/$(database)/documents/requests/$(requestId)).data.userId == request.auth.uid || isAdmin());
+      }
+    }
+    
+    // Test collection for initial handshake
+    match /test/connection {
+      allow read: if true;
+    }
+  }
+}
